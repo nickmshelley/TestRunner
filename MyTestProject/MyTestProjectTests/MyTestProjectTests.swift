@@ -20,7 +20,6 @@ class MyTestProjectTests: XCTestCase {
     
     func test01() {
         slowTest("test01")
-        XCTFail("failed")
     }
 
     func test02() {
