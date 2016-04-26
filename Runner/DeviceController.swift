@@ -230,16 +230,6 @@ class DeviceController {
             TRLog(handle.availableData)
         }
         task.launch()
-        
-        // This is hanging for some reason, so kill it after a timeout
-        let waitForLaunchTimeout = dispatch_time(DISPATCH_TIME_NOW, Int64(20 * Double(NSEC_PER_SEC)))
-        dispatch_after(waitForLaunchTimeout, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            if task.running {
-                print("\n=== KILLING SIMULATORS HUNG, KILLING THAT ===")
-                task.terminate()
-            }
-        }
-        
         task.waitUntilExit()
     }
     
