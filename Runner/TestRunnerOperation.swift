@@ -52,7 +52,7 @@ class TestRunnerOperation: NSOperation {
     private var timeoutCounter = 0
     
     var loaded = false
-    var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String]?, deviceID: String) -> Void)?
+    var completion: ((status: TestRunnerStatus, simulatorName: String, succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
     
     init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool) {
         self.deviceFamily = deviceFamily
@@ -96,23 +96,32 @@ class TestRunnerOperation: NSOperation {
         if !loaded {
             NSNotificationCenter.defaultCenter().postNotificationName(TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
         }
-        let succeededTests = getSucceededTests()
+        let (succeededTests, failedTests) = getSucceededAndFailedTests()
         status = (task.terminationStatus == 0 && (succeededTests ?? []).sort() == tests.sort()) ? .Success : .Failed
-        completion?(status: status, simulatorName: simulatorName, attemptedTests: tests, succeededTests: succeededTests, deviceID: deviceID)
+        completion?(status: status, simulatorName: simulatorName, succeededTests: succeededTests, failedTests: failedTests, deviceID: deviceID)
 
         executing = false
         finished = true
     }
     
-    func getSucceededTests() -> [String]? {
-        guard let logFilePath = logFilePath, jsonObjects = JSON.jsonObjectsFromJSONStreamFile(logFilePath) else { return nil }
-
-        let succeededTests = Set<String>(jsonObjects.flatMap { jsonObject -> String? in
-            guard let succeeded = jsonObject["succeeded"] as? Bool where succeeded, let className = jsonObject["className"] as? String, methodName = jsonObject["methodName"] as? String else { return nil }
-            return String(format: "%@/%@", className, methodName)
-        })
+    func getSucceededAndFailedTests() -> (succeeded: [String], failed: [String]) {
+        guard let logFilePath = logFilePath, jsonObjects = JSON.jsonObjectsFromJSONStreamFile(logFilePath) else { return ([], []) }
         
-        return Array(succeededTests)
+        print(jsonObjects)
+        
+        typealias TestStatus = (succeeded: Bool, className: String, methodName: String)
+
+        let testStatuses = jsonObjects.flatMap { jsonObject -> TestStatus? in
+            guard let succeeded = jsonObject["succeeded"] as? Bool, let className = jsonObject["className"] as? String, methodName = jsonObject["methodName"] as? String else { return nil }
+            return (succeeded, className, methodName)
+        }
+        
+        func statusToString(status: TestStatus) -> String {
+            return String(format: "%@/%@", status.className, status.methodName)
+        }
+        
+        let grouped = testStatuses.groupBy { $0.succeeded }
+        return (grouped[true]?.map(statusToString) ?? [], grouped[false]?.map(statusToString) ?? [])
     }
 
     func notifyIfLaunched(task: XCToolTask) {
