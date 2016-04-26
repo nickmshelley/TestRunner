@@ -153,7 +153,7 @@ public class TestRunner: NSObject {
     
     func getNextTests() -> [String] {
         // Temporarily have all simulators run all tests because most are hanging at this point.
-        return allTests?.prefix(5).filter { !succeededTests.contains($0) } ?? []
+        return allTests?.filter { !succeededTests.contains($0) } ?? []
     }
     
     func createOperation(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool = false) -> TestRunnerOperation {
