@@ -107,8 +107,6 @@ class TestRunnerOperation: NSOperation {
     func getSucceededAndFailedTests() -> (succeeded: [String], failed: [String]) {
         guard let logFilePath = logFilePath, jsonObjects = JSON.jsonObjectsFromJSONStreamFile(logFilePath) else { return ([], []) }
         
-        print(jsonObjects)
-        
         typealias TestStatus = (succeeded: Bool, className: String, methodName: String)
 
         let testStatuses = jsonObjects.flatMap { jsonObject -> TestStatus? in
