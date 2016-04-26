@@ -52,7 +52,7 @@ class TestRunnerOperation: NSOperation {
     private var timeoutCounter = 0
     
     var loaded = false
-    var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String], deviceID: String) -> Void)?
+    var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String]?, deviceID: String) -> Void)?
     
     init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool) {
         self.deviceFamily = deviceFamily
@@ -96,9 +96,8 @@ class TestRunnerOperation: NSOperation {
         if !loaded {
             NSNotificationCenter.defaultCenter().postNotificationName(TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
         }
-        
-        let succeededTests = getSucceededTests() ?? []
-        status = (task.terminationStatus == 0 && succeededTests.sort() == tests.sort()) ? .Success : .Failed
+        let succeededTests = getSucceededTests()
+        status = (task.terminationStatus == 0 && (succeededTests ?? []).sort() == tests.sort()) ? .Success : .Failed
         completion?(status: status, simulatorName: simulatorName, attemptedTests: tests, succeededTests: succeededTests, deviceID: deviceID)
 
         executing = false

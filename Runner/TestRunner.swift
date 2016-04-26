@@ -160,7 +160,7 @@ public class TestRunner: NSObject {
         let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: tests, alreadyLoaded: alreadyLoaded)
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
-                self.succeededTests += succeededTests
+                self.succeededTests += succeededTests ?? []
             }
             switch status {
             case .Success:
@@ -185,20 +185,25 @@ public class TestRunner: NSObject {
                     self.testRunnerQueue.addOperation(nextTestOperation, waitForLoad: false)
                 }
             case .Failed:
-                let failedTests = attemptedTests.filter { !succeededTests.contains($0) }
-                TRLog("\n\nTests FAILED (\(failedTests)) on \(simulatorName)\n\n", simulatorName: simulatorName)
+                
                 
                 var failedForRealzies = false
                 var nextTests = [String]()
                 dataSynchronizationQueue.addOperationWithBlock {
-                    for failure in failedTests {
-                        self.failedTests[failure] = (self.failedTests[failure] ?? 0) + 1
-                        let failedCount = self.failedTests[failure]
-                        TRLog("Test \(failure) failure number \(failedCount ?? -1)\n", simulatorName: simulatorName)
-                        if failedCount >= AppArgs.shared.retryCount {
-                            failedForRealzies = true
-                            TRLog("\n\n***************Test \(failure) failed too many times. Aborting remaining tests.***************\n\n", simulatorName: simulatorName)
+                    if let succeededTests = succeededTests {
+                        let failedTests = attemptedTests.filter { !succeededTests.contains($0) }
+                        TRLog("\n\nTests FAILED (\(failedTests)) on \(simulatorName)\n\n", simulatorName: simulatorName)
+                        for failure in failedTests {
+                            self.failedTests[failure] = (self.failedTests[failure] ?? 0) + 1
+                            let failedCount = self.failedTests[failure]
+                            TRLog("Test \(failure) failure number \(failedCount ?? -1)\n", simulatorName: simulatorName)
+                            if failedCount >= AppArgs.shared.retryCount {
+                                failedForRealzies = true
+                                TRLog("\n\n***************Test \(failure) failed too many times. Aborting remaining tests.***************\n\n", simulatorName: simulatorName)
+                            }
                         }
+                    } else {
+                        TRLog("\n\nFAILED to run any tests on \(simulatorName)\n\n", simulatorName: simulatorName)
                     }
                     
                     nextTests = self.getNextTests()
