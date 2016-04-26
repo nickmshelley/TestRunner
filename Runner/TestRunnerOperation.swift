@@ -139,7 +139,7 @@ class TestRunnerOperation: NSOperation {
         dispatch_after(waitForLaunchTimeout, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             guard !self.loaded else { return }
             
-            TRLog("TIMED OUT Launching Simulator after \(Int64(AppArgs.shared.launchTimeout * Double(NSEC_PER_SEC))) seconds", simulatorName: self.simulatorName)
+            TRLog("TIMED OUT Launching Simulator after \(AppArgs.shared.launchTimeout) seconds", simulatorName: self.simulatorName)
             
             // If not launched after 60 seconds, just mark as launched, something probably went wrong
             self.loaded = true

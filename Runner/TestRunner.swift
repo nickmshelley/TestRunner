@@ -215,7 +215,7 @@ public class TestRunner: NSObject {
                 if failedForRealzies {
                     // Failed, kill all items in queue
                     NSLog("Failed for realzies")
-                    self.testRunnerQueue.cancelAllOperations()
+                    self.cleanup()
                 } else if !nextTests.isEmpty {
                     // Create new device for retry
                     let retryDeviceID = DeviceController.sharedController.resetDeviceWithID(deviceID, simulatorName: simulatorName) ?? deviceID

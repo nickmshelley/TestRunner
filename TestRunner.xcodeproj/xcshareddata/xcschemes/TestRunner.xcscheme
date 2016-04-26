@@ -67,6 +67,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-launch-timeout 60"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-scheme &quot;GospelLibrary&quot;"
             isEnabled = "NO">
          </CommandLineArgument>
