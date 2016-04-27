@@ -131,6 +131,8 @@ public class TestRunner: NSObject {
         logQueue.waitUntilAllOperationsAreFinished()
         dataSynchronizationQueue.waitUntilAllOperationsAreFinished()
         
+        NSLog("Failed tests: \(self.failedTests)")
+        
         return allTestsPassed()
     }
     
@@ -156,12 +158,21 @@ public class TestRunner: NSObject {
     }
     
     func getNextTests() -> [String] {
+        let numberToRun = 10
+        let minimumToRun = 5
         // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
         testsToRun = testsToRun.filter { !succeededTests.contains($0) }
-        guard testsToRun.count >= 5 else { return allTests?.filter { !succeededTests.contains($0) } ?? [] }
         
-        let nextTests = testsToRun.prefix(15)
-        testsToRun = Array(testsToRun.dropFirst(15))
+        var nextTests = testsToRun.prefix(numberToRun)
+        testsToRun = Array(testsToRun.dropFirst(numberToRun))
+        
+        if nextTests.count < minimumToRun {
+            nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }
+        }
+        
+        if nextTests.count < minimumToRun {
+            nextTests += allTests?.filter { !succeededTests.contains($0) } ?? []
+        }
         
         return Array(nextTests)
     }
