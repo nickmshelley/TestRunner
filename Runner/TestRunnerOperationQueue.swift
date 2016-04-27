@@ -21,15 +21,15 @@ class TestRunnerOperationQueue: NSOperationQueue {
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "simulatorLoaded:", name: TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
     }
     
-    func addOperation(operation: NSOperation, waitForLoad: Bool) {
+    override func addOperation(operation: NSOperation) {
         // Causing it to hang, when just one build is added it has a wait operation but it
-        if waitForLoad && isWaitingToLoad() {
+        if isWaitingToLoad() {
             let waitOperation = WaitOperation()
             waitOperations.append(waitOperation)
             operation.addDependency(waitOperation)
         }
         
-        addOperation(operation)
+        super.addOperation(operation)
     }
     
     private func isWaitingToLoad() -> Bool {
