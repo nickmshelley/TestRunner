@@ -158,14 +158,14 @@ public class TestRunner: NSObject {
         testsToRun = testsToRun.filter { !succeededTests.contains($0) }
         guard !testsToRun.isEmpty else { return allTests?.filter { !succeededTests.contains($0) } ?? [] }
         
-        let nextTests = testsToRun.prefix(10)
-        testsToRun = Array(testsToRun.dropFirst(10))
+        let nextTests = testsToRun.prefix(15)
+        testsToRun = Array(testsToRun.dropFirst(15))
         
         return Array(nextTests)
     }
     
-    func createOperation(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool = false) -> TestRunnerOperation {
-        let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: tests, alreadyLoaded: alreadyLoaded)
+    func createOperation(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String]) -> TestRunnerOperation {
+        let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: tests)
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
@@ -189,8 +189,11 @@ public class TestRunner: NSObject {
                 }
                 
                 if !nextTests.isEmpty {
+                    // Create new device for retry
+                    let retryDeviceID = DeviceController.sharedController.resetDeviceWithID(deviceID, simulatorName: simulatorName) ?? deviceID
+                    
                     // Start next set of tests
-                    let nextTestOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: nextTests, alreadyLoaded: true)
+                    let nextTestOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID, tests: nextTests)
                     self.testRunnerQueue.addOperation(nextTestOperation, waitForLoad: false)
                 }
             case .Failed:

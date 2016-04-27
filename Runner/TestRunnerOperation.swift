@@ -54,12 +54,11 @@ class TestRunnerOperation: NSOperation {
     var loaded = false
     var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
     
-    init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool) {
+    init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String]) {
         self.deviceFamily = deviceFamily
         self.simulatorName = simulatorName
         self.deviceID = deviceID
         self.tests = tests
-        loaded = alreadyLoaded
         
         _executing = false
         _finished = false
@@ -73,10 +72,8 @@ class TestRunnerOperation: NSOperation {
         executing = true
         status = .Running
 
-        var arguments = ["-destination", "id=\(deviceID)", "run-tests"]
-        if !loaded {
-            arguments.append("-newSimulatorInstance")
-        }
+        var arguments = ["-destination", "id=\(deviceID)", "run-tests", "-newSimulatorInstance"]
+
         if let target = AppArgs.shared.target {
             let onlyTests: String = "\(target):" + tests.joinWithSeparator(",")
             arguments += ["-only", onlyTests]
