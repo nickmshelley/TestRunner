@@ -110,10 +110,7 @@ public class TestRunner: NSObject {
             
             for (deviceFamily, deviceInfos) in devices {
                 for (index, deviceInfo) in deviceInfos.enumerate() {
-                    let tests = getNextTests()
-                    guard !tests.isEmpty else { continue }
-                    
-                    let operation = createOperation(deviceFamily, simulatorName: deviceInfo.simulatorName, deviceID: deviceInfo.deviceID, tests: tests)
+                    let operation = createOperation(deviceFamily, simulatorName: deviceInfo.simulatorName, deviceID: deviceInfo.deviceID)
                     
                     // Wait for loaded to finish
                     testRunnerQueue.addOperation(operation)
@@ -177,8 +174,8 @@ public class TestRunner: NSObject {
         return Array(nextTests)
     }
     
-    func createOperation(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String]) -> TestRunnerOperation {
-        let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: tests)
+    func createOperation(deviceFamily: String, simulatorName: String, deviceID: String) -> TestRunnerOperation {
+        let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: getNextTests)
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
@@ -188,11 +185,6 @@ public class TestRunner: NSObject {
             case .Success:
                 TRLog("Tests PASSED\n", simulatorName: simulatorName)
                 
-                var nextTests = [String]()
-                dataSynchronizationQueue.addOperationWithBlock {
-                    nextTests = self.getNextTests()
-                }
-                
                 logQueue.waitUntilAllOperationsAreFinished()
                 dataSynchronizationQueue.waitUntilAllOperationsAreFinished()
                 
@@ -201,30 +193,25 @@ public class TestRunner: NSObject {
                     return
                 }
                 
-                if !nextTests.isEmpty {
-                    // Create new device for retry
-                    let retryDeviceID = DeviceController.sharedController.resetDeviceWithID(deviceID, simulatorName: simulatorName) ?? deviceID
-                    
-                    // Start next set of tests
-                    let nextTestOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID, tests: nextTests)
-                    self.testRunnerQueue.addOperation(nextTestOperation)
-                }
+                // Create new device for retry
+                let retryDeviceID = DeviceController.sharedController.resetDeviceWithID(deviceID, simulatorName: simulatorName) ?? deviceID
+                
+                // Start next set of tests
+                let nextTestOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID)
+                self.testRunnerQueue.addOperation(nextTestOperation)
             case .Failed:
                 var failedForRealzies = false
-                var nextTests = [String]()
                 dataSynchronizationQueue.addOperationWithBlock {
                     TRLog("\n\nTests FAILED (\(failedTests)) on \(simulatorName)\n\n", simulatorName: simulatorName)
                     for failure in failedTests {
                         self.failedTests[failure] = (self.failedTests[failure] ?? 0) + 1
                         let failedCount = self.failedTests[failure]
                         TRLog("Test \(failure) failure number \(failedCount ?? -1)\n", simulatorName: simulatorName)
-                        if failedCount >= AppArgs.shared.retryCount {
+                        if failedCount >= AppArgs.shared.retryCount && !self.succeededTests.contains(failure) {
                             failedForRealzies = true
                             TRLog("\n\n***************Test \(failure) failed too many times. Aborting remaining tests.***************\n\n", simulatorName: simulatorName)
                         }
                     }
-                    
-                    nextTests = self.getNextTests()
                 }
                 
                 logQueue.waitUntilAllOperationsAreFinished()
@@ -239,12 +226,12 @@ public class TestRunner: NSObject {
                     // Failed, kill all items in queue
                     NSLog("Failed for realzies")
                     self.cleanup()
-                } else if !nextTests.isEmpty {
+                } else {
                     // Create new device for retry
                     let retryDeviceID = DeviceController.sharedController.resetDeviceWithID(deviceID, simulatorName: simulatorName) ?? deviceID
                     
                     // Retry
-                    let retryOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID, tests: nextTests)
+                    let retryOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID)
                     self.testRunnerQueue.addOperation(retryOperation)
                 }
             case .Running, .Stopped:

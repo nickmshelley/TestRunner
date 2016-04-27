@@ -19,7 +19,7 @@ class TestRunnerOperation: NSOperation {
     
     private let deviceFamily: String
     private let deviceID: String
-    private let tests: [String]
+    private let testsFunc: () -> [String]
     
     override var executing: Bool {
         get {
@@ -54,11 +54,11 @@ class TestRunnerOperation: NSOperation {
     var loaded = false
     var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
     
-    init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String]) {
+    init(deviceFamily: String, simulatorName: String, deviceID: String, tests: () -> [String]) {
         self.deviceFamily = deviceFamily
         self.simulatorName = simulatorName
         self.deviceID = deviceID
-        self.tests = tests
+        self.testsFunc = tests
         
         _executing = false
         _finished = false
@@ -67,6 +67,12 @@ class TestRunnerOperation: NSOperation {
     }
     
     override func start() {
+        let tests = testsFunc()
+        guard !tests.isEmpty else {
+            finished = true
+            return
+        }
+        
         super.start()
         
         executing = true
