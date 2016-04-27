@@ -65,6 +65,7 @@ public class TestRunner: NSObject {
     
     let testRunnerQueue = TestRunnerOperationQueue()
     private var allTests: [String]?
+    private var testsToRun = [String]()
     private var succeededTests = [String]()
     private var failedTests = [String: Int]()
     private var finished = false
@@ -105,6 +106,7 @@ public class TestRunner: NSObject {
             }
             
             self.allTests = allTests
+            testsToRun = allTests
             
             for (deviceFamily, deviceInfos) in devices {
                 for (index, deviceInfo) in deviceInfos.enumerate() {
@@ -152,15 +154,22 @@ public class TestRunner: NSObject {
     }
     
     func getNextTests() -> [String] {
-        // Temporarily have all simulators run all tests because most are hanging at this point.
-        return allTests?.filter { !succeededTests.contains($0) } ?? []
+        // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
+        testsToRun = testsToRun.filter { !succeededTests.contains($0) }
+        guard !testsToRun.isEmpty else { return allTests?.filter { !succeededTests.contains($0) } ?? [] }
+        
+        let nextTests = testsToRun.prefix(10)
+        testsToRun = Array(testsToRun.dropFirst(10))
+        
+        return Array(nextTests)
     }
     
     func createOperation(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool = false) -> TestRunnerOperation {
         let operation = TestRunnerOperation(deviceFamily: deviceFamily, simulatorName: simulatorName, deviceID: deviceID, tests: tests, alreadyLoaded: alreadyLoaded)
-        operation.completion = { status, simulatorName, succeededTests, failedTests, deviceID in
+        operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
+                self.testsToRun += attemptedTests.filter { !succeededTests.contains($0) }
             }
             switch status {
             case .Success:

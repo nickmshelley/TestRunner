@@ -52,7 +52,7 @@ class TestRunnerOperation: NSOperation {
     private var timeoutCounter = 0
     
     var loaded = false
-    var completion: ((status: TestRunnerStatus, simulatorName: String, succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
+    var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
     
     init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String], alreadyLoaded: Bool) {
         self.deviceFamily = deviceFamily
@@ -98,7 +98,7 @@ class TestRunnerOperation: NSOperation {
         }
         let (succeededTests, failedTests) = getSucceededAndFailedTests()
         status = (task.terminationStatus == 0 && (succeededTests ?? []).sort() == tests.sort()) ? .Success : .Failed
-        completion?(status: status, simulatorName: simulatorName, succeededTests: succeededTests, failedTests: failedTests, deviceID: deviceID)
+        completion?(status: status, simulatorName: simulatorName, attemptedTests: tests, succeededTests: succeededTests, failedTests: failedTests, deviceID: deviceID)
 
         executing = false
         finished = true
