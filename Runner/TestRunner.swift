@@ -137,8 +137,10 @@ public class TestRunner: NSObject {
     func allTestsPassed() -> Bool {
         var passed = false
         dataSynchronizationQueue.addOperationWithBlock {
-            NSLog("all: \(self.allTests?.sort() ?? [])")
-            NSLog("succeeded: \(self.succeededTests.unique().sort())")
+            NSLog("Total tests: \(self.allTests?.count ?? 0)")
+            NSLog("Succeeded tests: \(self.succeededTests.unique().count)")
+            let remainingTests = self.allTests?.filter { !self.succeededTests.contains($0) } ?? []
+            NSLog("Remaining tests (\(remainingTests.count): \(remainingTests))")
             passed = self.succeededTests.unique().sort() == self.allTests?.sort() ?? []
         }
         
@@ -156,7 +158,7 @@ public class TestRunner: NSObject {
     func getNextTests() -> [String] {
         // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
         testsToRun = testsToRun.filter { !succeededTests.contains($0) }
-        guard !testsToRun.isEmpty else { return allTests?.filter { !succeededTests.contains($0) } ?? [] }
+        guard testsToRun.count >= 5 else { return allTests?.filter { !succeededTests.contains($0) } ?? [] }
         
         let nextTests = testsToRun.prefix(15)
         testsToRun = Array(testsToRun.dropFirst(15))
@@ -169,7 +171,7 @@ public class TestRunner: NSObject {
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
-                self.testsToRun += attemptedTests.filter { !succeededTests.contains($0) }
+                self.testsToRun += attemptedTests.filter { !self.succeededTests.contains($0) }
             }
             switch status {
             case .Success:
