@@ -63,7 +63,7 @@ public class TestRunner: NSObject {
         exit(testsPassed ? 0 : 1)
     }
     
-    let testRunnerQueue = TestRunnerOperationQueue()
+    let testRunnerQueue = NSOperationQueue()
     private var allTests: [String]?
     private var testsToRun = [String]()
     private var succeededTests = [String]()
@@ -116,7 +116,7 @@ public class TestRunner: NSObject {
                     let operation = createOperation(deviceFamily, simulatorName: deviceInfo.simulatorName, deviceID: deviceInfo.deviceID, tests: tests)
                     
                     // Wait for loaded to finish
-                    testRunnerQueue.addOperation(operation, waitForLoad: true)
+                    testRunnerQueue.addOperation(operation)
                 }
             }
             
@@ -207,7 +207,7 @@ public class TestRunner: NSObject {
                     
                     // Start next set of tests
                     let nextTestOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID, tests: nextTests)
-                    self.testRunnerQueue.addOperation(nextTestOperation, waitForLoad: false)
+                    self.testRunnerQueue.addOperation(nextTestOperation)
                 }
             case .Failed:
                 var failedForRealzies = false
@@ -245,7 +245,7 @@ public class TestRunner: NSObject {
                     
                     // Retry
                     let retryOperation = self.createOperation(deviceFamily, simulatorName: simulatorName, deviceID: retryDeviceID, tests: nextTests)
-                    self.testRunnerQueue.addOperation(retryOperation, waitForLoad: true)
+                    self.testRunnerQueue.addOperation(retryOperation)
                 }
             case .Running, .Stopped:
                 break

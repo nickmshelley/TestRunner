@@ -51,7 +51,6 @@ class TestRunnerOperation: NSOperation {
     private var lastCheck = NSDate().timeIntervalSince1970
     private var timeoutCounter = 0
     
-    var loaded = false
     var completion: ((status: TestRunnerStatus, simulatorName: String, attemptedTests: [String], succeededTests: [String], failedTests: [String], deviceID: String) -> Void)?
     
     init(deviceFamily: String, simulatorName: String, deviceID: String, tests: [String]) {
@@ -90,9 +89,6 @@ class TestRunnerOperation: NSOperation {
         task.launch()
         task.waitUntilExit()
         
-        if !loaded {
-            NSNotificationCenter.defaultCenter().postNotificationName(TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
-        }
         let (succeededTests, failedTests) = getSucceededAndFailedTests()
         status = (task.terminationStatus == 0 && (succeededTests ?? []).sort() == tests.sort()) ? .Success : .Failed
         completion?(status: status, simulatorName: simulatorName, attemptedTests: tests, succeededTests: succeededTests, failedTests: failedTests, deviceID: deviceID)
@@ -118,38 +114,6 @@ class TestRunnerOperation: NSOperation {
         let grouped = testStatuses.groupBy { $0.succeeded }
         return (grouped[true]?.map(statusToString) ?? [], grouped[false]?.map(statusToString) ?? [])
     }
-
-    func notifyIfLaunched(task: XCToolTask) {
-        guard !loaded else { return }
-        
-        let now = NSDate().timeIntervalSince1970
-        guard (lastCheck + 2) < now else { return }
-        lastCheck = now
-        
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            if let logFilePath = task.logFilePath where JSON.hasBeginTestSuiteEvent(logFilePath) {
-                guard !self.loaded else { return }
-                
-                TRLog("TIMED OUT Running Tests", simulatorName: self.simulatorName)
-                
-                self.loaded = true
-                NSNotificationCenter.defaultCenter().postNotificationName(TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
-                return
-            }
-        }
-        
-        let waitForLaunchTimeout = dispatch_time(DISPATCH_TIME_NOW, Int64(AppArgs.shared.launchTimeout * Double(NSEC_PER_SEC)))
-        dispatch_after(waitForLaunchTimeout, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            guard !self.loaded else { return }
-            
-            TRLog("TIMED OUT Launching Simulator after \(AppArgs.shared.launchTimeout) seconds", simulatorName: self.simulatorName)
-            
-            // If not launched after 60 seconds, just mark as launched, something probably went wrong
-            self.loaded = true
-            NSNotificationCenter.defaultCenter().postNotificationName(TestRunnerOperationQueue.SimulatorLoadedNotification, object: nil)
-            return
-        }
-    }
     
 }
 
@@ -168,8 +132,6 @@ extension TestRunnerOperation: XCToolTaskDelegate {
         timeoutCounter++
         
         TRLog(data, simulatorName: simulatorName)
-
-        notifyIfLaunched(task)
     }
     
 }
