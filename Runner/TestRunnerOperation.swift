@@ -122,7 +122,7 @@ class TestRunnerOperation: NSOperation {
         }
         
         let grouped = testStatuses.groupBy { $0.succeeded }
-        return (grouped[true]?.map(statusToString) ?? [], grouped[false]?.map(statusToString) ?? [])
+        return (grouped[true]?.map(statusToString).unique() ?? [], grouped[false]?.map(statusToString).unique() ?? [])
     }
 
     func notifyIfLaunched(task: XCToolTask) {

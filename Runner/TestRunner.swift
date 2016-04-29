@@ -158,7 +158,7 @@ public class TestRunner: NSObject {
         let numberToRun = 10
         let minimumToRun = 5
         // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
-        testsToRun = testsToRun.filter { !succeededTests.contains($0) }
+        testsToRun = testsToRun.unique().filter { !succeededTests.contains($0) }
         
         var nextTests = testsToRun.prefix(numberToRun)
         testsToRun = Array(testsToRun.dropFirst(numberToRun))
@@ -171,7 +171,7 @@ public class TestRunner: NSObject {
             nextTests += allTests?.filter { !succeededTests.contains($0) } ?? []
         }
         
-        return Array(nextTests)
+        return Array(nextTests.unique())
     }
     
     func createOperation(deviceFamily: String, simulatorName: String, deviceID: String) -> TestRunnerOperation {
