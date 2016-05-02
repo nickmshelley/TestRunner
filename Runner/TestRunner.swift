@@ -168,7 +168,7 @@ public class TestRunner: NSObject {
             nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }
         }
         
-        if nextTests.count < minimumToRun {
+        if nextTests.isEmpty {
             nextTests += allTests?.filter { !succeededTests.contains($0) } ?? []
         }
         
