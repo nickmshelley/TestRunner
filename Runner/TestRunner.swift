@@ -71,6 +71,7 @@ public class TestRunner: NSObject {
     private var finished = false
     
     func runTests() -> Bool {
+        print("KIF_SCREENSHOTS environment variable from TestRunner: \(NSProcessInfo.processInfo().environment["KIF_SCREENSHOTS"])")
         if AppArgs.shared.buildTests {
             do {
                 try BuildTests.sharedInstance.build()
