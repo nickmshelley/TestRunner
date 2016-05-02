@@ -169,7 +169,7 @@ public class TestRunner: NSObject {
         }
         
         if nextTests.isEmpty {
-            nextTests += allTests?.filter { !succeededTests.contains($0) } ?? []
+            nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().take(minimumToRun) ?? []
         }
         
         return Array(nextTests.unique())
