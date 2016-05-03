@@ -129,7 +129,8 @@ public class TestRunner: NSObject {
         logQueue.waitUntilAllOperationsAreFinished()
         dataSynchronizationQueue.waitUntilAllOperationsAreFinished()
         
-        NSLog("Failed tests: \(self.failedTests)")
+        TRLog("Failed tests: \(self.failedTests)")
+        logQueue.waitUntilAllOperationsAreFinished()
         
         return allTestsPassed()
     }
