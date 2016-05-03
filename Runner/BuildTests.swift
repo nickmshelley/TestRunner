@@ -28,7 +28,7 @@ class BuildTests {
             return
         }
 
-        if let bundleTests = listTests() {
+        if let bundleTests = listTests(retryCount: 20) {
             do {
                 let data = try NSJSONSerialization.dataWithJSONObject(bundleTests, options: [])
                 try data.writeToFile(AppArgs.shared.logsDir + "/testsByTarget.json", options: [])
@@ -39,14 +39,14 @@ class BuildTests {
         
     }
     
-    private func listTests() -> [String: [String]]? {
+    private func listTests(retryCount retryCount: Int) -> [String: [String]]? {
         print("Listing tests...")
         
         let task = XCToolTask(arguments: ["run-tests", "-listTestsOnly"], logFilename: "listTests.json", outputFileLogType: .JSON, standardOutputLogType: .Text)
         task.delegate = self
         task.launch()
         
-        let launchTimeout: NSTimeInterval = 60
+        let launchTimeout: NSTimeInterval = 30
         let waitForLaunchTimeout = dispatch_time(DISPATCH_TIME_NOW, Int64(launchTimeout * Double(NSEC_PER_SEC)))
         dispatch_after(waitForLaunchTimeout, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             if task.isRunning {
@@ -58,7 +58,13 @@ class BuildTests {
         
         task.waitUntilExit()
         guard task.terminationStatus == 0 else {
-            return nil
+            if retryCount > 0 {
+                print("Trying again to get list of tests.")
+                return listTests(retryCount: retryCount - 1)
+            } else {
+                print("Failed to get list of tests")
+                exit(1)
+            }
         }
         
         var bundleName = ""
