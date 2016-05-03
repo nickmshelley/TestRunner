@@ -1,10 +1,21 @@
 PODS:
-  - Swiftification (5.3.1)
+  - Swiftification (5.3.2)
 
 DEPENDENCIES:
-  - Swiftification
+  - Swiftification (from `https://github.com/CrossWaterBridge/Swiftification.git`,
+    commit `6b7765e2df759fb6bb0c8865d10b0f0a68db965b`)
+
+EXTERNAL SOURCES:
+  Swiftification:
+    :commit: 6b7765e2df759fb6bb0c8865d10b0f0a68db965b
+    :git: https://github.com/CrossWaterBridge/Swiftification.git
+
+CHECKOUT OPTIONS:
+  Swiftification:
+    :commit: 6b7765e2df759fb6bb0c8865d10b0f0a68db965b
+    :git: https://github.com/CrossWaterBridge/Swiftification.git
 
 SPEC CHECKSUMS:
-  Swiftification: 494c17888ced7762a4e7147bd4083d77d84172b6
+  Swiftification: c17533de2d3fdc147c41a084ceeb38f779016f8c
 
 COCOAPODS: 0.39.0
