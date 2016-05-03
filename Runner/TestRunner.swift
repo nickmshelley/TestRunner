@@ -156,23 +156,30 @@ public class TestRunner: NSObject {
     }
     
     func getNextTests() -> [String] {
-        let numberToRun = 10
-        let minimumToRun = 5
-        // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
-        testsToRun = testsToRun.unique().filter { !succeededTests.contains($0) }
-        
-        var nextTests = testsToRun.prefix(numberToRun)
-        testsToRun = Array(testsToRun.dropFirst(numberToRun))
-        
-        if nextTests.count < minimumToRun {
-            nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(minimumToRun)
+        if AppArgs.shared.simulatorsCount > 1 {
+            // Partition across multiple simulators
+            let numberToRun = 10
+            let minimumToRun = 5
+            
+            // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
+            testsToRun = testsToRun.unique().filter { !succeededTests.contains($0) }
+            
+            var nextTests = testsToRun.prefix(numberToRun)
+            testsToRun = Array(testsToRun.dropFirst(numberToRun))
+            
+            if nextTests.count < minimumToRun {
+                nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(minimumToRun)
+            }
+            
+            if nextTests.isEmpty {
+                nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(minimumToRun) ?? []
+            }
+            
+            return Array(nextTests.unique())
+        } else {
+            // Give all tests to single simulator
+            return allTests?.filter { !succeededTests.contains($0) } ?? []
         }
-        
-        if nextTests.isEmpty {
-            nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(minimumToRun) ?? []
-        }
-        
-        return Array(nextTests.unique())
     }
     
     func createOperation(deviceFamily: String, simulatorName: String, deviceID: String) -> TestRunnerOperation {
