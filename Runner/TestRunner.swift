@@ -165,7 +165,7 @@ public class TestRunner: NSObject {
         testsToRun = Array(testsToRun.dropFirst(numberToRun))
         
         if nextTests.count < minimumToRun {
-            nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }
+            nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(minimumToRun)
         }
         
         if nextTests.isEmpty {
