@@ -108,10 +108,13 @@ class DeviceController {
     }
     
     func deleteDevicesWithIDs(deviceIDs: [String]) {
+        print("\n=== DELETING DEVICES ===")
         deviceIDs.forEach { deleteDeviceWithID($0) }
+        print("\n=== DELETED DEVICES ===")
     }
     
     func shutdownDeviceWithID(deviceID: String) {
+        print("\n=== SHUTTING DOWN TASK WITH ID \(deviceID) ===")
         let task = NSTask()
         task.launchPath = "/usr/bin/xcrun"
         task.arguments = ["simctl", "shutdown", deviceID]
@@ -119,11 +122,12 @@ class DeviceController {
         task.standardOutput = NSPipe()
         task.launch()
         task.waitUntilExit()
+        print("\n=== SHUT DOWN TASK WITH ID \(deviceID) ===")
     }
 
     func deleteDeviceWithID(deviceID: String) {
         shutdownDeviceWithID(deviceID)
-
+        print("\n=== DELETING DEVICE WITH ID \(deviceID) ===")
         let task = NSTask()
         task.launchPath = "/usr/bin/xcrun"
         task.arguments = ["simctl", "delete", deviceID]
@@ -131,8 +135,7 @@ class DeviceController {
         task.standardOutput = NSPipe()
         task.launch()
         task.waitUntilExit()
-        
-        print("Deleted device with ID:", deviceID)
+        print("\n=== DELETED DEVICE TASK WITH ID \(deviceID) ===")
         
         killProcessesForDevice(deviceID)
     }
@@ -142,6 +145,7 @@ class DeviceController {
     }
     
     func killProcessesForDevice(deviceID: String) {
+        print("\n=== KILLING PROCESSES FOR DEVICE WITH ID \(deviceID) ===")
         let task = NSTask()
         task.launchPath = "/bin/sh"
         task.arguments = ["-c", "ps aux | grep \"\(deviceID)\""]
@@ -163,6 +167,8 @@ class DeviceController {
                 }
             }
         }
+        
+        print("\n=== KILLED PROCESSES FOR DEVICE WITH ID \(deviceID) ===")
     }
     
     func killProcess(processParts: [String]) {
@@ -188,16 +194,20 @@ class DeviceController {
             task.launch()
             task.waitUntilExit()
             
+            print("\n=== KILLED PROCESS: \(processParts.joinWithSeparator(" ")) ===")
+            
             return
         }
     }
 
     func resetDeviceWithID(deviceID: String, simulatorName: String) -> String? {
+        print("\n=== RESETTING DEVICE WITH ID: \(deviceID) ===")
         shutdownDeviceWithID(deviceID)
         
         let parts = simulatorName.componentsSeparatedByString(",")
         if let deviceTypeID = deviceTypes[parts[1].trimmed()], runtimeID = runtimes[parts[2].trimmed()] {
             deleteDeviceWithID(deviceID)
+            print("\n=== RESET DEVICE WITH ID: \(deviceID) ===")
             return createTestDevice(simulatorName, deviceTypeID: deviceTypeID, runtimeID: runtimeID)
         }
         
@@ -208,6 +218,8 @@ class DeviceController {
         task.standardOutput = NSPipe()
         task.launch()
         task.waitUntilExit()
+        
+        print("\n=== RESET DEVICE WITH ID: \(deviceID) ===")
         
         return deviceID
     }
@@ -231,6 +243,7 @@ class DeviceController {
         }
         task.launch()
         task.waitUntilExit()
+        print("\n=== KILLED SIMULATORS ===")
     }
     
     func createTestDevices() -> [String: [(simulatorName: String, deviceID: String)]] {
