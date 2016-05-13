@@ -146,34 +146,20 @@ class DeviceController {
     }
     
     func killProcessesForDevice(deviceID: String) {
-        let task = NSTask()
-        task.launchPath = "/bin/sh"
-        task.arguments = ["-c", "ps aux | grep \"\(deviceID)\""]
-        
-        let standardOutputData = NSMutableData()
-        let pipe = NSPipe()
-        pipe.fileHandleForReading.readabilityHandler = { handle in
-            standardOutputData.appendData(handle.availableData)
-        }
-        task.standardOutput = pipe
-        task.launch()
-        task.waitUntilExit()
-
-        if task.terminationStatus == 0, let processInfoString = String(data: standardOutputData, encoding: NSUTF8StringEncoding) {
-            for processString in processInfoString.componentsSeparatedByString("\n") {
-                let parts = getProcessComponents(processString)
-                if !parts.isEmpty && !parts.contains("grep") {
-                    killProcess(parts)
-                }
-            }
-        }
+        killProcessesWithGrepArg(deviceID)
     }
     
     func killSimulatorProcesses() {
-        print("\n=== KILLING SIMULATOR-SPAWNED PROCESSES ===")
+        killProcessesWithGrepArg("iPhoneSimulator.platform")
+        killProcessesWithGrepArg("pkd")
+        killProcessesWithGrepArg("aslmanager")
+    }
+    
+    func killProcessesWithGrepArg(grepArg: String) {
+        print("\n=== KILLING PROCESSES WITH GREP ARG: \(grepArg) ===")
         let task = NSTask()
         task.launchPath = "/bin/sh"
-        task.arguments = ["-c", "ps aux | grep iPhoneSimulator.platform"]
+        task.arguments = ["-c", "ps aux | grep \"\(grepArg)\""]
         
         let standardOutputData = NSMutableData()
         let pipe = NSPipe()
@@ -192,7 +178,7 @@ class DeviceController {
                 }
             }
         }
-        print("\n=== KILLED SIMULATOR-SPAWNED PROCESSES ===")
+        print("\n=== KILLED PROCESSES WITH GREP ARG: \(grepArg) ===")
     }
     
     func killLaunchdSimProcessForDevice(deviceID: String) {
