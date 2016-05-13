@@ -169,6 +169,7 @@ class DeviceController {
     }
     
     func killLaunchdSimProcess() {
+        print("\n=== KILLING LAUNCHD_SIM PROCESS ===")
         let task = NSTask()
         task.launchPath = "/bin/sh"
         task.arguments = ["-c", "ps aux | grep launchd_sim"]
@@ -190,6 +191,7 @@ class DeviceController {
                 }
             }
         }
+        print("\n=== KILLED LAUNCHD_SIM PROCESS ===")
     }
     
     func killProcess(processParts: [String]) {
