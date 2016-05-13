@@ -169,6 +169,32 @@ class DeviceController {
         }
     }
     
+    func killSimulatorProcesses() {
+        print("\n=== KILLING SIMULATOR-SPAWNED PROCESSES ===")
+        let task = NSTask()
+        task.launchPath = "/bin/sh"
+        task.arguments = ["-c", "ps aux | grep iPhoneSimulator.platform"]
+        
+        let standardOutputData = NSMutableData()
+        let pipe = NSPipe()
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            standardOutputData.appendData(handle.availableData)
+        }
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0, let processInfoString = String(data: standardOutputData, encoding: NSUTF8StringEncoding) {
+            for processString in processInfoString.componentsSeparatedByString("\n") {
+                let parts = getProcessComponents(processString)
+                if !parts.isEmpty && !parts.contains("grep") {
+                    killProcess(parts)
+                }
+            }
+        }
+        print("\n=== KILLED SIMULATOR-SPAWNED PROCESSES ===")
+    }
+    
     func killLaunchdSimProcessForDevice(deviceID: String) {
         print("\n=== KILLING LAUNCHD_SIM PROCESS WITH ID \(deviceID) ===")
         let task = NSTask()
@@ -318,6 +344,7 @@ class DeviceController {
     func killAndDeleteTestDevices() {
         killallSimulators()
         deleteTestDevices()
+        killSimulatorProcesses()
         print("\n")
     }
     
