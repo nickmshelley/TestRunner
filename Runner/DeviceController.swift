@@ -119,6 +119,10 @@ class DeviceController {
         task.standardError = NSPipe()
         task.standardOutput = NSPipe()
         task.launch()
+        while task.running {
+            sleep(3)
+            killLaunchdSimProcess()
+        }
         task.waitUntilExit()
         print("\n=== SHUT DOWN TASK WITH ID \(deviceID) ===")
     }
@@ -162,7 +166,30 @@ class DeviceController {
                 }
             }
         }
+    }
+    
+    func killLaunchdSimProcess() {
+        let task = NSTask()
+        task.launchPath = "/bin/sh"
+        task.arguments = ["-c", "ps aux | grep launchd_sim"]
         
+        let standardOutputData = NSMutableData()
+        let pipe = NSPipe()
+        pipe.fileHandleForReading.readabilityHandler = { handle in
+            standardOutputData.appendData(handle.availableData)
+        }
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+        
+        if task.terminationStatus == 0, let processInfoString = String(data: standardOutputData, encoding: NSUTF8StringEncoding) {
+            for processString in processInfoString.componentsSeparatedByString("\n") {
+                let parts = getProcessComponents(processString)
+                if !parts.isEmpty && !parts.contains("grep") {
+                    killProcess(parts)
+                }
+            }
+        }
     }
     
     func killProcess(processParts: [String]) {
