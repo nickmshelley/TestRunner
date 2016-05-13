@@ -120,8 +120,8 @@ class DeviceController {
         task.standardOutput = NSPipe()
         task.launch()
         while task.running {
-            sleep(3)
-            killLaunchdSimProcess()
+            sleep(10)
+            killLaunchdSimProcessForDevice(deviceID)
         }
         task.waitUntilExit()
         print("\n=== SHUT DOWN TASK WITH ID \(deviceID) ===")
@@ -168,11 +168,11 @@ class DeviceController {
         }
     }
     
-    func killLaunchdSimProcess() {
-        print("\n=== KILLING LAUNCHD_SIM PROCESS ===")
+    func killLaunchdSimProcessForDevice(deviceID: String) {
+        print("\n=== KILLING LAUNCHD_SIM PROCESS WITH ID \(deviceID) ===")
         let task = NSTask()
         task.launchPath = "/bin/sh"
-        task.arguments = ["-c", "ps aux | grep launchd_sim"]
+        task.arguments = ["-c", "ps aux | grep launchd_sim | grep \"\(deviceID)\""]
         
         let standardOutputData = NSMutableData()
         let pipe = NSPipe()
@@ -191,7 +191,7 @@ class DeviceController {
                 }
             }
         }
-        print("\n=== KILLED LAUNCHD_SIM PROCESS ===")
+        print("\n=== KILLED LAUNCHD_SIM PROCESS WITH ID \(deviceID) ===")
     }
     
     func killProcess(processParts: [String]) {
