@@ -119,9 +119,10 @@ class DeviceController {
         task.standardError = NSPipe()
         task.standardOutput = NSPipe()
         task.launch()
+        sleep(5)
         while task.running {
-            sleep(10)
             killLaunchdSimProcessForDevice(deviceID)
+            sleep(5)
         }
         task.waitUntilExit()
         print("\n=== SHUT DOWN TASK WITH ID \(deviceID) ===")
