@@ -176,7 +176,7 @@ public class TestRunner: NSObject {
                 nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(minimumToRun) ?? []
             }
             
-            return Array(nextTests.unique().filter { $0.lowercaseString.containsString("failed_to_start") })
+            return Array(nextTests.unique().filter { !$0.lowercaseString.containsString("failed_to_start") })
         } else {
             // Give all tests to single simulator
             return allTests?.filter { !succeededTests.contains($0) } ?? []
