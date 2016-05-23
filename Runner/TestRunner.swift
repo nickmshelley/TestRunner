@@ -160,7 +160,7 @@ public class TestRunner: NSObject {
         if AppArgs.shared.simulatorsCount > 1 {
             // Partition across multiple simulators
             let numberToRun = 10
-            let minimumToRun = 5
+            let extraToRun = 5
             
             // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
             testsToRun = testsToRun.unique().filter { !succeededTests.contains($0) }
@@ -168,12 +168,12 @@ public class TestRunner: NSObject {
             var nextTests = testsToRun.prefix(numberToRun)
             testsToRun = Array(testsToRun.dropFirst(numberToRun))
             
-            if nextTests.count < minimumToRun {
-                nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(minimumToRun)
+            if nextTests.isEmpty {
+                nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(extraToRun)
             }
             
             if nextTests.isEmpty {
-                nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(minimumToRun) ?? []
+                nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(extraToRun) ?? []
             }
             
             return Array(nextTests.unique().filter { !$0.lowercaseString.containsString("failed_to_start") })
