@@ -185,13 +185,15 @@ public class TestRunner: NSObject {
                     
                     if nextTests.isEmpty {
                         sleep(10)
+                    } else {
+                        self.runningTests += nextTests
                     }
                 }
                 
                 dataSynchronizationQueue.waitUntilAllOperationsAreFinished()
             }
             
-            runningTests += nextTests
+            
             return nextTests
         } else {
             // Give all tests to single simulator
