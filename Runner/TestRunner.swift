@@ -207,7 +207,7 @@ public class TestRunner: NSObject {
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
-                self.testsToRun += attemptedTests.filter { !self.succeededTests.contains($0) }
+                self.testsToRun += attemptedTests.filter { !succeededTests.contains($0) && !failedTests.contains($0) }
                 self.runningTests = self.runningTests.filter { !attemptedTests.contains($0) }
             }
             switch status {
