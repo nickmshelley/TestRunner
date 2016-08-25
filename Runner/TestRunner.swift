@@ -141,6 +141,7 @@ public class TestRunner: NSObject {
         dataSynchronizationQueue.addOperationWithBlock {
             NSLog("Total tests: \(self.allTests?.count ?? 0)")
             NSLog("Succeeded tests: \(self.succeededTests.unique().count)")
+            NSLog("Running tests: (\(self.runningTests.count): \(self.runningTests))")
             let remainingTests = self.allTests?.filter { !self.succeededTests.contains($0) } ?? []
             NSLog("Remaining tests (\(remainingTests.count): \(remainingTests))")
             passed = self.succeededTests.unique().sort() == self.allTests?.sort() ?? []
