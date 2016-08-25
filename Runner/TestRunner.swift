@@ -68,6 +68,7 @@ public class TestRunner: NSObject {
     private var testsToRun = [String]()
     private var succeededTests = [String]()
     private var failedTests = [String: Int]()
+    private var runningTests = [String]()
     private var finished = false
     
     func runTests() -> Bool {
@@ -157,26 +158,41 @@ public class TestRunner: NSObject {
     }
     
     func getNextTests() -> [String] {
+        func includeTest(testName: String) -> Bool {
+            return !succeededTests.contains(testName) && !runningTests.contains(testName)
+        }
         if AppArgs.shared.simulatorsCount > 1 {
-            // Partition across multiple simulators
-            let numberToRun = 10
-            let extraToRun = 5
-            
-            // Return the next ten tests to run, or if they are all already running, double up on the remaining tests
-            testsToRun = testsToRun.unique().filter { !succeededTests.contains($0) }
-            
-            var nextTests = testsToRun.prefix(numberToRun)
-            testsToRun = Array(testsToRun.dropFirst(numberToRun))
-            
-            if nextTests.isEmpty {
-                nextTests += failedTests.keys.filter { !self.succeededTests.contains($0) }.shuffle().prefix(extraToRun)
+            var nextTests = [String]()
+            while nextTests.isEmpty && !allTestsPassed() {
+                dataSynchronizationQueue.addOperationWithBlock {
+                    // Partition across multiple simulators
+                    self.testsToRun = self.testsToRun.unique().filter(includeTest)
+                    let numberToRun = self.testsToRun.count > 20 ? 10 : 5
+                    let extraToRun = 1
+                    
+                    nextTests = Array(self.testsToRun.prefix(numberToRun))
+                    self.testsToRun = Array(self.testsToRun.dropFirst(numberToRun))
+                    
+                    if nextTests.isEmpty {
+                        nextTests += self.failedTests.keys.filter(includeTest).shuffle().prefix(extraToRun)
+                    }
+                    
+                    if nextTests.isEmpty {
+                        nextTests += self.allTests?.filter(includeTest).shuffle().prefix(extraToRun) ?? []
+                    }
+                    
+                    nextTests = Array(nextTests.unique().filter { !$0.lowercaseString.containsString("failed_to_start") })
+                    
+                    if nextTests.isEmpty {
+                        sleep(10)
+                    }
+                }
+                
+                dataSynchronizationQueue.waitUntilAllOperationsAreFinished()
             }
             
-            if nextTests.isEmpty {
-                nextTests += allTests?.filter { !succeededTests.contains($0) }.shuffle().prefix(extraToRun) ?? []
-            }
-            
-            return Array(nextTests.unique().filter { !$0.lowercaseString.containsString("failed_to_start") })
+            runningTests += nextTests
+            return nextTests
         } else {
             // Give all tests to single simulator
             return allTests?.filter { !succeededTests.contains($0) } ?? []
@@ -189,6 +205,7 @@ public class TestRunner: NSObject {
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
                 self.testsToRun += attemptedTests.filter { !self.succeededTests.contains($0) }
+                self.runningTests = self.runningTests.filter { !attemptedTests.contains($0) }
             }
             switch status {
             case .Success:
