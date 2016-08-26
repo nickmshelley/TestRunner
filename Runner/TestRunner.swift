@@ -185,7 +185,7 @@ public class TestRunner: NSObject {
                     nextTests = Array(nextTests.unique().filter { !$0.lowercaseString.containsString("failed_to_start") })
                     
                     if nextTests.isEmpty {
-                        sleep(10)
+                        sleep(20)
                     } else {
                         self.runningTests += nextTests
                     }
@@ -207,7 +207,7 @@ public class TestRunner: NSObject {
         operation.completion = { status, simulatorName, attemptedTests, succeededTests, failedTests, deviceID in
             dataSynchronizationQueue.addOperationWithBlock {
                 self.succeededTests += succeededTests
-                self.testsToRun += attemptedTests.filter { !succeededTests.contains($0) && !failedTests.contains($0) }
+                self.testsToRun += attemptedTests.filter { !succeededTests.contains($0) && !failedTests.contains($0) && !self.failedTests.keys.contains($0) }
                 self.runningTests = self.runningTests.filter { !attemptedTests.contains($0) }
             }
             switch status {
