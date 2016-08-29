@@ -168,7 +168,10 @@ public class TestRunner: NSObject {
                 dataSynchronizationQueue.addOperationWithBlock {
                     // Partition across multiple simulators
                     self.testsToRun = self.testsToRun.unique().filter(includeTest)
-                    let numberToRun = self.testsToRun.count > 20 ? 10 : 5
+                    var numberToRun = self.testsToRun.count > 20 ? 10 : 5
+                    if self.runningTests.count + self.testsToRun.count <= 10 {
+                        numberToRun = 1
+                    }
                     let extraToRun = 1
                     
                     nextTests = Array(self.testsToRun.prefix(numberToRun))
